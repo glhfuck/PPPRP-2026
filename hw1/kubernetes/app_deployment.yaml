@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-deployment
+  labels:
+    app: my-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        - name: my-app
+          image: my-app-img:latest
+          imagePullPolicy: Never
+          envFrom:
+            - configMapRef:
+                name: my-app-config
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          ports:
+            - containerPort: 5003
+          volumeMounts:
+            - name: log-volume
+              mountPath: /my-app/app/logs
+              subPathExpr: "$(POD_NAME)"
+      volumes:
+      - name: log-volume
+        hostPath:
+          path: /my-app/logs/
+          type: DirectoryOrCreate
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-service
+spec:
+  selector:
+    app: my-app
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    port: 5003
+    targetPort: 5003
