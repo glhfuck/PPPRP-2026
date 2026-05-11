@@ -1,0 +1,8 @@
+services:
+  my-app:
+    image: my-app-img
+    container_name: my-app
+    working_dir: /app
+    # command: /bin/sh -c "sleep infinity"
+    ports:
+      - "5003:5003"

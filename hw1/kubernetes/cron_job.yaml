@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: log-archiver
+spec:
+  schedule: "*/1 * * * *"  # Для тестирования каждую минуту (в продакшене будет */10)
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: archiver
+            image: alpine
+            command: ["sh", "-c"]
+            args:
+              - |
+                timestamp=$(date +%Y%m%d%H%M%S);
+                cp /my-app/logs/aggregated-logs/app.log /tmp/app.log;
+                tar -czf /log-archives/app-logs-${timestamp}.tar.gz -C /tmp app.log;
+                rm /tmp/app.log;
+                echo "Create archive: /log-archives/app-logs-${timestamp}.tar.gz";
+            volumeMounts:
+              - name: app-logs
+                mountPath: /my-app/logs/aggregated-logs
+              - name: archives
+                mountPath: /log-archives
+          restartPolicy: OnFailure
+          volumes:
+            - name: app-logs
+              hostPath:
+                path: /my-app/logs/aggregated-logs
+                type: DirectoryOrCreate
+            - name: archives
+              hostPath:
+                path: /log-archives
+                type: DirectoryOrCreate
