@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: log-agent
+  labels:
+    app: log-agent
+spec:
+  selector:
+    matchLabels:
+      app: log-agent
+  template:
+    metadata:
+      labels:
+        app: log-agent
+    spec:
+      containers:
+      - name: log-agent
+        image: bash:5.2-alpine3.19
+        command: ["bash", "-c", "mkdir -p /logs/aggregated-logs;
+                                 for logfile in /logs/*/app.log; do tail -F \"$logfile\" | tee -a /logs/aggregated-logs/app.log &
+                                 done;
+                                 wait"]
+        volumeMounts:
+        - name: log-volume
+          mountPath: /logs
+      volumes:
+      - name: log-volume
+        hostPath:
+          path: /my-app/logs

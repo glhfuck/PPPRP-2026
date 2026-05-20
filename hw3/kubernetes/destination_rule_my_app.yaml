@@ -1,0 +1,20 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: my-app-service-destination
+  namespace: space-with-istio
+spec:
+  host: my-app-service.space-with-istio.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    loadBalancer:
+      simple: LEAST_CONN
+      # https://istio.io/latest/docs/reference/config/networking/destination-rule/#LoadBalancerSettings-SimpleLB-LEAST_CONN алгоритм помечен как deprecated
+      # Написано, что вместо него стоит использовать LEAST_REQUEST, который и устанавливается, даже если указать LEAST_CONN
+    connectionPool:
+      tcp:
+        maxConnections: 3
+      http:
+        http1MaxPendingRequests: 5
+        maxRequestsPerConnection: 1
